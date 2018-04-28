@@ -1,7 +1,7 @@
 %{
 /* Declarations section */
 #include <stdio.h>
-#include "our_tokens.h"
+#include "tokens.h"
 
 typedef enum our_tokens_e
 {
@@ -66,48 +66,55 @@ escapeexp 		([\\\"\a\b\e\f\n\r\t\v\0\x{digit}{2}])
 
 {linebreak}													;
 {whitespace}												;
-\x2d\x2d\x2d 												showToken(STARTSTRUCT);
-\.\.\. 														showToken(ENDSTRUCT);
-\x5b 														showToken(LLIST);
-\x5d 														showToken(RLIST);
-\x7b 														showToken(LDICT);
-\x7d 														showToken(RDICT);
-\x3a 														showToken(KEY);
-\x3f 														showToken(COMPLEXKEY);
-\x2d 														showToken(ITEM);
-, 															showToken(COMMA);
-\x21\x21{letter}+ 											showToken(TYPE);
-\x23[^\x0d\x0a|\x0d|\x0a]+									showToken(COMMENT);
-true			 											showToken(TRUE);
-false			 											showToken(FALSE);
-[+-]{0,1}{digit}+	 										showToken(INTEGER);
-0x{hexdigit}+		 										showToken(INTEGER_HEX);
-0x					 										showToken(INTEGER_HEX_ZERO);
-0o{octdigit}+		 										showToken(INTEGER_OCT);
-0o					 										showToken(INTEGER_OCT_ZERO);
-[+-]{0,1}{digit}+\.{digit}*									showToken(REAL);
-[+-]{0,1}{digit}*\.{digit}+									showToken(REAL);
-[+-]{0,1}{digit}*\.{digit}*e[+-]{digit}+					showToken(REAL);
-\.inf														showToken(REAL);
-\.NaN														showToken(REAL);
-{letter}{digitletter}*										showToken(VAL);
+\x2d\x2d\x2d 												return showToken(OUR_STARTSTRUCT);
+\.\.\. 														return showToken(OUR_ENDSTRUCT);
+\x5b 														return showToken(OUR_LLIST);
+\x5d 														return showToken(OUR_RLIST);
+\x7b 														return showToken(OUR_LDICT);
+\x7d 														return showToken(OUR_RDICT);
+\x3a 														return showToken(OUR_KEY);
+\x3f 														return showToken(OUR_COMPLEXKEY);
+\x2d 														return showToken(OUR_ITEM);
+, 															return showToken(OUR_COMMA);
+\x21\x21{letter}+ 											return showToken(OUR_TYPE);
+\x23[^\x0d\x0a|\x0d|\x0a]+									;
+true			 											return showToken(OUR_TRUE);
+false			 											return showToken(OUR_FALSE);
+[+-]{0,1}{digit}+	 										return showToken(OUR_INTEGER);
+0x{hexdigit}+		 										return showToken(OUR_INTEGER_HEX);
+0x					 										return showToken(OUR_INTEGER_HEX_ZERO);
+0o{octdigit}+		 										return showToken(OUR_INTEGER_OCT);
+0o					 										return showToken(OUR_INTEGER_OCT_ZERO);
+[+-]{0,1}{digit}+\.{digit}*									return showToken(OUR_REAL);
+[+-]{0,1}{digit}*\.{digit}+									return showToken(OUR_REAL);
+[+-]{0,1}{digit}*\.{digit}*e[+-]{digit}+					return showToken(OUR_REAL);
+\.inf														return showToken(OUR_REAL);
+\.NaN														return showToken(OUR_REAL);
+{letter}{digitletter}*										return showToken(OUR_VAL);
 \'	   														string_buf_ptr = string_buf; BEGIN(str1);
 <str1>\'	  												{ /* saw closing quote - all done */
 															BEGIN(INITIAL);
 															*string_buf_ptr = '\0';
-															showToken(STRING1);
+															return showToken(OUR_STRING1);
 															}
 <str1><<EOF>>												errorHandlerUnclosed();
 <str1>[^\']+												{
 															char *yptr = yytext;
-															while ( *yptr )
+															while ( *yptr ){
+																if(*yptr < 32 || *yptr > 126)
+																{
+																	strcpy(yytext,yptr);
+																	yytext[1]=0;
+																	errorHandler();
+																}
 																*string_buf_ptr++ = *yptr++;
+																}
 															}
 \"	   														string_buf_ptr = string_buf; BEGIN(str2);
 <str2>\"	  												{ /* saw closing quote - all done */
 															BEGIN(INITIAL);
 															*string_buf_ptr = '\0';
-															showToken(STRING2);
+															return showToken(OUR_STRING2);
 															}
 <str2>\x0d\x0a|\x0d|\x0a											{
 															*string_buf_ptr++ = ' ';
@@ -146,9 +153,9 @@ false			 											showToken(FALSE);
 																*string_buf_ptr++ = *yptr++;
 																}
 															}
-&{letter}+													showToken(DECLARATION);
-\*{letter}+													showToken(DEREFERENCE);
-<<EOF>>														showToken(EOF1);return 0;
+&{letter}+													return showToken(OUR_DECLARATION);
+\*{letter}+													return showToken(OUR_DEREFERENCE);
+<<EOF>>														return showToken(OUR_EOF1);
 .															errorHandler();
 
 
@@ -164,7 +171,7 @@ enum tokens showToken(our_tokens t)
 		return ENDSTRUCT;
 		break;
 	case OUR_LLIST     :
-		return	LLIST;
+		return LLIST;
 		break;
 	case OUR_RLIST     :
 		return RLIST;
@@ -227,9 +234,8 @@ enum tokens showToken(our_tokens t)
 		break;
 	default:
 		errorHandler();
-}
+	}
 	
-	return EF;
 }
 
 void errorHandler()
