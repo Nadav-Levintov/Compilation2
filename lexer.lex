@@ -101,12 +101,12 @@ false			 											return showToken(OUR_FALSE);
 <str1>[^\']+												{
 															char *yptr = yytext;
 															while ( *yptr ){
-																if(*yptr < 32 || *yptr > 126)
-																{
-																	strcpy(yytext,yptr);
-																	yytext[1]=0;
-																	errorHandler();
-																}
+																if((*yptr != '\n') && (*yptr < 32 || *yptr > 126))
+																	{
+																		strcpy(yytext,yptr);
+																		yytext[1]=0;
+																		errorHandler();
+																	}
 																*string_buf_ptr++ = *yptr++;
 																}
 															}
@@ -116,7 +116,7 @@ false			 											return showToken(OUR_FALSE);
 															*string_buf_ptr = '\0';
 															return showToken(OUR_STRING2);
 															}
-<str2>\x0d\x0a|\x0d|\x0a											{
+<str2>\x0d\x0a|\x0d|\x0a									{
 															*string_buf_ptr++ = ' ';
 															/* Is this correct? */
 															}
