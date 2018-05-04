@@ -101,7 +101,7 @@ false			 											return showToken(OUR_FALSE);
 <str1>[^\']+												{
 															char *yptr = yytext;
 															while ( *yptr ){
-																if((*yptr != '\n') && (*yptr < 32 || *yptr > 126))
+																if((*yptr != '\n') && (*yptr < 32 || *yptr > 126) && (*yptr != '\t'))
 																	{
 																		strcpy(yytext,yptr);
 																		yytext[1]=0;
