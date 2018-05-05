@@ -144,7 +144,19 @@ false			 											return showToken(OUR_FALSE);
 <str2>[^\\|\"|\x0d\x0a|\x0d|\x0a]+							{
 															char *yptr = yytext;
 															while ( *yptr ){
-																if(*yptr < 32 || *yptr > 126)
+																if((*yptr < 32 || *yptr > 126) && (*yptr != '\t'))
+																{
+																	strcpy(yytext,yptr);
+																	yytext[1]=0;
+																	errorHandler();
+																}
+																*string_buf_ptr++ = *yptr++;
+																}
+															}
+<str2>\|													{
+															char *yptr = yytext;
+															while ( *yptr ){
+																if((*yptr < 32 || *yptr > 126) && (*yptr != '\t'))
 																{
 																	strcpy(yytext,yptr);
 																	yytext[1]=0;
